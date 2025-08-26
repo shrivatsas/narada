@@ -1,0 +1,27 @@
+line-length = 100
+target-version = "py311"
+src = ["app", "scripts", "tests"]
+exclude = [
+    "alembic/versions",
+]
+
+[lint]
+select = [
+  "E",    # pycodestyle
+  "F",    # pyflakes
+  "I",    # isort
+  "B",    # flake8-bugbear
+  "UP",   # pyupgrade
+  "C4",   # flake8-comprehensions
+]
+ignore = [
+  "B008", # allow FastAPI-style dependencies in defaults
+]
+
+[format]
+quote-style = "preserve"
+indent-style = "space"
+line-ending = "auto"
+
+[lint.isort]
+known-first-party = ["app"]

@@ -1,0 +1,190 @@
+version: '3'
+
+vars:
+  APP: app.main:app
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task -l
+
+  env:
+    desc: Create .env from example if missing
+    cmds:
+      - cmd: test -f .env || cp .env.example .env
+        silent: true
+
+  up:
+    desc: Start Docker services (Postgres, Redis)
+    cmds:
+      - docker-compose up -d --force-recreate --remove-orphans
+
+  down:
+    desc: Stop Docker services
+    cmds:
+      - docker-compose down --remove-orphans
+
+  compose:config:
+    desc: Show resolved docker-compose config (for debugging env vars)
+    cmds:
+      - docker-compose config
+
+  compose:ps:
+    desc: List compose-managed containers
+    cmds:
+      - docker-compose ps
+
+  db:logs:
+    desc: Tail Postgres logs
+    cmds:
+      - docker-compose logs -f db
+
+  db:reset:
+    desc: DANGER - Stop services and remove DB volume (dev only)
+    cmds:
+      - cmd: >-
+          bash -lc "echo 'This will DESTROY the dev database volume.';
+          read -p 'Type YES to continue: ' ans; [ \"$ans\" = \"YES\" ] || { echo 'Aborted.'; exit 1; }"
+      - docker-compose down -v --remove-orphans
+
+  install:
+    desc: Install runtime dependencies via uv
+    cmds:
+      - bash -lc "uv sync"
+
+  install:dev:
+    desc: Install dev dependencies via uv
+    cmds:
+      - bash -lc "uv sync --extra dev"
+
+  lock:
+    desc: Generate uv.lock for reproducible installs
+    cmds:
+      - uv lock
+
+  db:init:
+    desc: Initialize database schema and seed data
+    cmds:
+      - uv run python -m scripts.init_db
+
+  db:wait:
+    desc: Wait until Postgres is ready to accept connections
+    cmds:
+      - cmd: >-
+          bash -lc "echo 'Waiting for Postgres to be ready...';
+          for i in {1..60}; do
+            if docker-compose exec -T db pg_isready -U \"${POSTGRES_USER:-app}\" -d \"${POSTGRES_DB:-discovery}\" >/dev/null 2>&1; then
+              echo 'Postgres is ready.'; exit 0;
+            fi;
+            sleep 1;
+          done;
+          echo 'Timed out waiting for Postgres readiness.';
+          docker-compose logs db | tail -n 50;
+          exit 1"
+
+  db:upgrade:
+    desc: Apply all Alembic migrations (upgrade to head)
+    cmds:
+      - uv run alembic -c alembic/alembic.ini upgrade head
+
+  db:downgrade:
+    desc: Downgrade database by one revision (or set TARGET)
+    vars:
+      TARGET: "-1"
+    cmds:
+      - uv run alembic -c alembic/alembic.ini downgrade {{.TARGET}}
+
+  db:current:
+    desc: Show current Alembic revision
+    cmds:
+      - uv run alembic -c alembic/alembic.ini current
+
+  db:heads:
+    desc: Show head revisions
+    cmds:
+      - uv run alembic -c alembic/alembic.ini heads
+
+  db:history:
+    desc: Show migration history
+    cmds:
+      - uv run alembic -c alembic/alembic.ini history --verbose
+
+  db:revision:
+    desc: Create a new Alembic revision (MSG="...")
+    vars:
+      MSG: "new revision"
+      AUTOGEN: "false"
+    cmds:
+      - |
+        if [ "{{.AUTOGEN}}" = "true" ]; then
+          uv run alembic -c alembic/alembic.ini revision --autogenerate -m "{{.MSG}}";
+        else
+          uv run alembic -c alembic/alembic.ini revision -m "{{.MSG}}";
+        fi
+
+  db:stamp:
+    desc: Stamp the database with a specific revision (REV="...")
+    vars:
+      REV: "head"
+    cmds:
+      - uv run alembic -c alembic/alembic.ini stamp {{.REV}}
+
+  run:
+    desc: Run FastAPI dev server
+    cmds:
+      - uv run uvicorn {{.APP}} --reload
+
+  test:
+    desc: Run tests
+    cmds:
+      - uv run pytest
+
+  lint:
+    desc: Lint code with ruff
+    cmds:
+      - uv run ruff check .
+
+  format:
+    desc: Format code with ruff
+    cmds:
+      - uv run ruff format .
+
+  typecheck:
+    desc: Type check with mypy
+    cmds:
+      - bash -lc "uv run mypy app scripts"
+
+  precommit:install:
+    desc: Install pre-commit hooks (via uvx)
+    cmds:
+      - uvx pre-commit install
+
+  precommit:run:
+    desc: Run pre-commit on all files (via uvx)
+    cmds:
+      - uvx pre-commit run --all-files
+
+  smoke:
+    desc: Smoke test root endpoint
+    cmds:
+      - curl -sS http://localhost:8000/
+
+  docs:serve:
+    desc: Serve docs with MkDocs on :8001
+    cmds:
+      - uvx mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
+
+  docs:build:
+    desc: Build static docs into ./site
+    cmds:
+      - uvx mkdocs build -f docs/mkdocs.yml -d site
+
+  setup:
+    desc: Bootstrap env, infra, deps, and init DB
+    cmds:
+      - task: env
+      - task: up
+      - task: install
+      - task: db:wait
+      - task: db:init

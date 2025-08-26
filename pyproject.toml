@@ -1,0 +1,70 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "narada"
+version = "0.1.0"
+description = "FastAPI backend with ingestion, RAG, and scheduling"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Narada" }]
+dependencies = [
+  "fastapi==0.111.0",
+  "uvicorn[standard]==0.30.5",
+  "python-dotenv==1.0.1",
+  "pydantic==2.8.2",
+  "SQLAlchemy==2.0.32",
+  "psycopg[binary,pool]==3.2.1",
+  "redis==5.0.8",
+  "httpx==0.27.0",
+  "feedparser==6.0.11",
+  "trafilatura==1.12.2",
+  "beautifulsoup4==4.12.3",
+  "langchain==0.2.12",
+  "langchain-community==0.2.11",
+  "chromadb==0.5.5",
+  "sentence-transformers==3.0.1",
+  "numpy==1.26.4",
+  "scikit-learn==1.5.1",
+  "python-jose[cryptography]==3.3.0",
+  "passlib[bcrypt]==1.7.4",
+  "apscheduler==3.10.4",
+  "alembic==1.13.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "ruff>=0.5.7",
+  "mypy>=1.11.1",
+  "bandit>=1.7.9",
+  "detect-secrets>=1.4.0",
+  "types-python-jose>=3.3.4.20240106",
+  "types-passlib>=1.7.7.20240327",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.hatch.build]
+only-include = ["app", "alembic", "scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+  "alembic",
+  "alembic.*",
+]
+ignore_missing_imports = true
