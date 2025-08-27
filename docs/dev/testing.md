@@ -13,3 +13,6 @@ Lint/format
 Pre-commit
 - Install: `task precommit:install`
 - Run: `task precommit:run`
+
+Security audit
+- pip-audit runs as a pre-commit hook to flag vulnerable dependencies.

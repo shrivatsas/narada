@@ -1,3 +1,6 @@
+default_language_version:
+  python: python3.11
+
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.10
@@ -17,6 +20,7 @@ repos:
         additional_dependencies:
           - pydantic>=2
           - sqlalchemy>=2
+          - types-PyJWT>=1.7.1
 
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.6
@@ -45,3 +49,11 @@ repos:
       - id: check-json
       - id: check-yaml
       - id: check-toml
+
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.7.3
+    hooks:
+      - id: pip-audit
+        # Audit the project by pointing pip-audit at the repo root
+        args: ["--progress-spinner=off", "."]
+        pass_filenames: false

@@ -16,15 +16,13 @@ Key choices
 	•	Playwright/Firecrawl/RSS connectors for ingestion (start with RSS/sitemaps; add crawlers later).
 	•	Optional: add a small cross-encoder reranker (e.g., bge-reranker) after Chroma retrieval to boost quality.
 
-ui: two simple views
-	•	daily digest
-5–7 bullets, each shows favicon, title, date, source link, ↑/↓.
-small “why this” popover: tags, recency, similarity score, preference boost.
-	•	at-the-moment
-tag leaderboard + sparkline; click a tag → show example docs & ask follow-ups.
+UI: two simple views
+	•	daily digest - 5–7 bullets, each shows favicon, title, date, source link, ↑/↓.small “why this” popover: tags, recency, similarity score, preference boost.
+	•	at-the-moment - tag leaderboard + sparkline; click a tag → show example docs & ask follow-ups.
 
 ### Project Structure
 
+```
 discovery-bot/
   ├─ app/
   │  ├─ main.py
@@ -72,6 +70,7 @@ discovery-bot/
   ├─ docker-compose.yml
   ├─ .env.example
   └─ README.md
+```
 
 ### Quickstart
 
@@ -84,20 +83,20 @@ discovery-bot/
   - Note: If you have Taskwarrior (`task`) installed, use `go-task` or alias `task=go-task`.
 
 ## Run services
-# One-time setup (env, Docker, deps, DB init)
+### One-time setup (env, Docker, deps, DB init)
 task setup
 
-# Run the API (dev server)
+### Run the API (dev server)
 task run
 
-# Add an RSS source
+### Add an RSS source
 curl -X POST http://localhost:8000/sources -H 'Content-Type: application/json' \
   -d '{"type":"rss","url":"https://rbi.org.in/Scripts/BS_PressReleaseDisplay.aspx?prid=RSS"}'
 
-# Get a digest (builds one on the fly)
+### Get a digest (builds one on the fly)
 curl http://localhost:8000/digest/today
 
-# Ask a query
+### Ask a query
 curl -X POST http://localhost:8000/query -H 'Content-Type: application/json' -d '{"q":"AA-based lending updates"}'
 
 ### Development
@@ -112,6 +111,13 @@ curl -X POST http://localhost:8000/query -H 'Content-Type: application/json' -d 
 - Pre-commit run: `task precommit:run`
 - Start/stop infra: `task up` / `task down`
 - Generate lockfile: `task lock`
+
+### Tooling
+
+- pip-audit: dependency vulnerability scan via pre-commit (see `.pre-commit/.pre-commit-config.yaml`).
+- structlog: structured JSON logs for production readiness.
+- OpenTelemetry: tracing hooks (install `--extra observability`) for OTLP/Jaeger exporters.
+- APScheduler: cron-style jobs for 09:00 IST digest and periodic crawls.
 
 ### Docs
 

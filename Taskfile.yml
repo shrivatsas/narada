@@ -158,12 +158,17 @@ tasks:
   precommit:install:
     desc: Install pre-commit hooks (via uvx)
     cmds:
-      - uvx pre-commit install
+      - uvx pre-commit install -c .pre-commit/.pre-commit-config.yaml
 
   precommit:run:
     desc: Run pre-commit on all files (via uvx)
     cmds:
-      - uvx pre-commit run --all-files
+      - uvx pre-commit run -c .pre-commit/.pre-commit-config.yaml --all-files
+
+  precommit:clean:
+    desc: Rebuild pre-commit hook environments
+    cmds:
+      - uvx pre-commit clean
 
   smoke:
     desc: Smoke test root endpoint
